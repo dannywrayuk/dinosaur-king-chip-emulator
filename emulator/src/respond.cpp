@@ -49,8 +49,8 @@ void* maskedData[4] = {
             SerialController::write(0x0A);
             uint8_t* response;
             getChipData(&response);
-            SerialController::write(response, 12);
-            SerialController::write(new uint8_t[116]{0x00, 0x00, 0x00, 0xAA}, 116);
+            SerialController::write(response, 8);
+            SerialController::write(new uint8_t[120]{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xAA}, 120);
             return &end[0];
         }
         return NO_NEXT;
@@ -167,7 +167,13 @@ void* serialEcho[6] = {
 void* readSerial[4] = {
     EXPECT(0x5E, &readSerial[1]),
     EXPECT(0x00, &readSerial[2]),
-    RESPOND(0x29, 0x0A, &readSerial[3]),
+    [](uint8_t input) -> void** {
+        if(input >= 0x20 && input <= 0x2F){
+            SerialController::write(0x0A);
+            return &readSerial[3];
+        }
+        return NO_NEXT;
+    },
     [](uint8_t input) -> void** {
         if(input == 0x4E){
             SerialController::write(0x0A);
@@ -183,7 +189,13 @@ void* readSerial[4] = {
 void* initialise[4] = {
     EXPECT(0x5E, &initialise[1]),
     EXPECT(0x00, &initialise[2]),
-    RESPOND(0x29, 0x6A, &initialise[3]),
+    [](uint8_t input) -> void** {
+        if(input >= 0x20 && input <= 0x2F){
+            SerialController::write(0x6A);
+            return &initialise[3];
+        }
+        return NO_NEXT;
+    },
     RESPOND(0x4E, 0xCA, &readSerial[0]),
 };
 
